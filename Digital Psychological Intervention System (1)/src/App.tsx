@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { LoginPage } from './components/LoginPage';
 import { StudentDashboard } from './components/StudentDashboard';
 import { AdminDashboard } from './components/AdminDashboard';
@@ -23,18 +24,26 @@ export default function App() {
     setUser(null);
   };
 
-  if (!user) {
-    return <LoginPage onLogin={handleLogin} />;
-  }
-
   return (
-    <>
-      {user.role === 'student' && (
-        <StudentDashboard user={user} onLogout={handleLogout} />
-      )}
-      {user.role === 'admin' && (
-        <AdminDashboard user={user} onLogout={handleLogout} />
-      )}
-    </>
+    <Router>
+      <Routes>
+        <Route 
+          path="/" 
+          element={user ? <Navigate to="/dashboard" /> : <LoginPage onLogin={handleLogin} />} 
+        />
+        <Route 
+          path="/dashboard" 
+          element={
+            !user ? <Navigate to="/" /> : 
+            user.role === 'admin' ? <AdminDashboard user={user} onLogout={handleLogout} /> : 
+            <StudentDashboard user={user} onLogout={handleLogout} />
+          } 
+        />
+        {/* Placeholders for new components */}
+        <Route path="/assessments" element={<div>Assessments Component Here</div>} />
+        <Route path="/chat" element={<div>Chat Component Here</div>} />
+        <Route path="/resources" element={<div>Resources Component Here</div>} />
+      </Routes>
+    </Router>
   );
 }

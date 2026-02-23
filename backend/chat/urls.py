@@ -1,5 +1,5 @@
 from django.urls import path
 
 urlpatterns = [
-    # Empty paths placeholder
+    # Placeholder for chat routes
 ]

@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework_simplejwt',
     'corsheaders',
     'users',
     'chat',
@@ -130,6 +131,20 @@ STATIC_URL = 'static/'
 
 # CORS Configuration
 CORS_ALLOW_ALL_ORIGINS = True # Development only
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+
+# Authentication Model
+AUTH_USER_MODEL = 'users.CustomUser'
+
+# REST Framework Setup
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
 
 # MongoDB Configuration
 MONGO_URI = os.getenv('MONGO_URI', 'mongodb://localhost:27017/mindcare')
