@@ -1,74 +1,120 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Calendar, Clock, User, CheckCircle, Phone, Video, MapPin } from 'lucide-react';
+import api from '../api/axios';
+
+interface TimeSlot {
+  id: number;
+  start_time: string;
+  end_time: string;
+  is_booked: boolean;
+  counselor_id: number;
+  counselor?: {
+    id: number;
+    name: string;
+    department: string;
+  };
+}
 
 interface Appointment {
-  id: string;
+  id: string | number;
   counsellor: string;
   date: string;
   time: string;
   type: 'in-person' | 'video' | 'phone';
   status: 'upcoming' | 'completed' | 'cancelled';
+  meeting_link?: string;
 }
 
-const COUNSELLORS = [
-  { id: '1', name: 'Dr. Sarah Williams', specialty: 'Anxiety & Stress Management', available: true },
-  { id: '2', name: 'Dr. Michael Chen', specialty: 'Depression & Mood Disorders', available: true },
-  { id: '3', name: 'Dr. Priya Patel', specialty: 'Academic Pressure & Performance', available: false },
-  { id: '4', name: 'Dr. James Thompson', specialty: 'Relationship & Social Issues', available: true }
-];
-
-const TIME_SLOTS = [
-  '09:00 AM', '10:00 AM', '11:00 AM', '02:00 PM', '03:00 PM', '04:00 PM'
-];
-
 export function BookingSystem() {
+  const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
   const [selectedCounsellor, setSelectedCounsellor] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
-  const [selectedTime, setSelectedTime] = useState('');
+  const [selectedTimeSlotId, setSelectedTimeSlotId] = useState('');
   const [selectedType, setSelectedType] = useState<'in-person' | 'video' | 'phone'>('video');
   const [showSuccess, setShowSuccess] = useState(false);
-  const [appointments, setAppointments] = useState<Appointment[]>([
-    {
-      id: '1',
-      counsellor: 'Dr. Sarah Williams',
-      date: '2024-12-28',
-      time: '10:00 AM',
-      type: 'video',
-      status: 'upcoming'
+  const [loading, setLoading] = useState(true);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [formError, setFormError] = useState('');
+
+  useEffect(() => {
+    fetchAvailableSlots();
+  }, []);
+
+  const fetchAvailableSlots = async () => {
+    try {
+      const res = await api.get('/appointments/available/');
+      setAvailableSlots(res.data);
+    } catch (err) {
+      console.error("Failed to fetch slots", err);
+    } finally {
+      setLoading(false);
     }
-  ]);
+  };
 
-  const handleBooking = (e: React.FormEvent) => {
+  // Extract unique counselors from available slots
+  const counselors = Array.from(new Set(availableSlots.map(s => s.counselor?.id)))
+    .map(id => availableSlots.find(s => s.counselor?.id === id)?.counselor)
+    .filter(Boolean) as {id: number, name: string, department: string}[];
+
+  // Get available dates for the selected counselor
+  const availableDates = Array.from(
+    new Set(
+      availableSlots
+        .filter(s => s.counselor?.id.toString() === selectedCounsellor)
+        .map(s => s.start_time.split('T')[0])
+    )
+  ).sort();
+
+  // Get times for the selected counselor and date
+  const availableTimes = availableSlots.filter(
+    s => s.counselor?.id.toString() === selectedCounsellor && s.start_time.startsWith(selectedDate)
+  );
+
+  const handleBooking = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    const counsellor = COUNSELLORS.find(c => c.id === selectedCounsellor);
-    if (!counsellor) return;
+    setFormError('');
 
-    const newAppointment: Appointment = {
-      id: Date.now().toString(),
-      counsellor: counsellor.name,
-      date: selectedDate,
-      time: selectedTime,
-      type: selectedType,
-      status: 'upcoming'
-    };
+    if (!selectedTimeSlotId) {
+       setFormError("Please select a valid time slot.");
+       return;
+    }
 
-    setAppointments(prev => [...prev, newAppointment]);
-    setShowSuccess(true);
-    
-    // Reset form
-    setSelectedCounsellor('');
-    setSelectedDate('');
-    setSelectedTime('');
-    
-    setTimeout(() => setShowSuccess(false), 5000);
+    try {
+      const res = await api.post('/appointments/book/', {
+        time_slot_id: selectedTimeSlotId,
+        notes: `Preference: ${selectedType}`
+      });
+      
+      const counselorName = availableSlots.find(s => s.id.toString() === selectedTimeSlotId)?.counselor?.name || 'Counselor';
+
+      const newAppointment: Appointment = {
+        id: res.data.id,
+        counsellor: counselorName,
+        date: selectedDate,
+        time: new Date(availableSlots.find(s => s.id.toString() === selectedTimeSlotId)!.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        type: selectedType,
+        status: 'upcoming',
+        meeting_link: res.data.meeting_link
+      };
+
+      setAppointments(prev => [...prev, newAppointment]);
+      setShowSuccess(true);
+      
+      // Reset form and refresh slots
+      setSelectedCounsellor('');
+      setSelectedDate('');
+      setSelectedTimeSlotId('');
+      fetchAvailableSlots();
+      
+      setTimeout(() => setShowSuccess(false), 5000);
+    } catch (err: any) {
+      setFormError(err.response?.data?.error || "Failed to book appointment. Please try again.");
+    }
   };
 
-  const getMinDate = () => {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    return tomorrow.toISOString().split('T')[0];
-  };
+  if (loading) {
+     return <div className="text-center p-8 text-gray-500">Loading scheduling system...</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -90,6 +136,12 @@ export function BookingSystem() {
         </div>
       )}
 
+      {formError && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative" role="alert">
+          <span className="block sm:inline">{formError}</span>
+        </div>
+      )}
+
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Booking Form */}
         <div className="bg-white rounded-2xl shadow-xl p-6 lg:p-8 border border-[#E2E8F0]">
@@ -103,18 +155,18 @@ export function BookingSystem() {
               </label>
               <select
                 value={selectedCounsellor}
-                onChange={(e) => setSelectedCounsellor(e.target.value)}
+                onChange={(e) => {
+                  setSelectedCounsellor(e.target.value);
+                  setSelectedDate('');
+                  setSelectedTimeSlotId('');
+                }}
                 className="w-full px-4 py-3.5 border border-[#E2E8F0] rounded-xl bg-[#F8FAFC] hover:bg-white focus:bg-white focus:border-[#4F46E5] focus:ring-4 focus:ring-[#4F46E5]/10 transition-all outline-none text-[#1E293B]"
                 required
               >
                 <option value="">Choose a counsellor...</option>
-                {COUNSELLORS.map(counsellor => (
-                  <option 
-                    key={counsellor.id} 
-                    value={counsellor.id}
-                    disabled={!counsellor.available}
-                  >
-                    {counsellor.name} - {counsellor.specialty} {!counsellor.available && '(Unavailable)'}
+                {counselors.map(c => (
+                  <option key={c.id} value={c.id}>
+                    {c.name} - {c.department}
                   </option>
                 ))}
               </select>
@@ -123,33 +175,44 @@ export function BookingSystem() {
             {/* Date Selection */}
             <div>
               <label className="block text-[#1E293B] font-semibold mb-2">
-                Preferred Date
+                Available Dates
               </label>
-              <input
-                type="date"
+              <select
                 value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                min={getMinDate()}
-                className="w-full px-4 py-3.5 border border-[#E2E8F0] rounded-xl bg-[#F8FAFC] hover:bg-white focus:bg-white focus:border-[#4F46E5] focus:ring-4 focus:ring-[#4F46E5]/10 transition-all outline-none text-[#1E293B]"
+                onChange={(e) => {
+                    setSelectedDate(e.target.value);
+                    setSelectedTimeSlotId('');
+                }}
+                disabled={!selectedCounsellor}
+                className="w-full px-4 py-3.5 border border-[#E2E8F0] rounded-xl bg-[#F8FAFC] hover:bg-white focus:bg-white focus:border-[#4F46E5] focus:ring-4 focus:ring-[#4F46E5]/10 transition-all outline-none text-[#1E293B] disabled:opacity-50"
                 required
-              />
+              >
+                <option value="">Select a date...</option>
+                {availableDates.map(date => (
+                  <option key={date} value={date}>
+                    {new Date(date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                  </option>
+                ))}
+              </select>
             </div>
 
             {/* Time Selection */}
             <div>
               <label className="block text-[#1E293B] font-semibold mb-2">
-                Preferred Time
+                Available Times
               </label>
               <select
-                value={selectedTime}
-                onChange={(e) => setSelectedTime(e.target.value)}
-                className="w-full px-4 py-3.5 border border-[#E2E8F0] rounded-xl bg-[#F8FAFC] hover:bg-white focus:bg-white focus:border-[#4F46E5] focus:ring-4 focus:ring-[#4F46E5]/10 transition-all outline-none text-[#1E293B]"
+                value={selectedTimeSlotId}
+                onChange={(e) => setSelectedTimeSlotId(e.target.value)}
+                disabled={!selectedDate}
+                className="w-full px-4 py-3.5 border border-[#E2E8F0] rounded-xl bg-[#F8FAFC] hover:bg-white focus:bg-white focus:border-[#4F46E5] focus:ring-4 focus:ring-[#4F46E5]/10 transition-all outline-none text-[#1E293B] disabled:opacity-50"
                 required
               >
                 <option value="">Choose a time...</option>
-                {TIME_SLOTS.map(time => (
-                  <option key={time} value={time}>{time}</option>
-                ))}
+                {availableTimes.map(slot => {
+                    const timeString = new Date(slot.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    return <option key={slot.id} value={slot.id}>{timeString}</option>;
+                })}
               </select>
             </div>
 
@@ -200,7 +263,8 @@ export function BookingSystem() {
 
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-[#4F46E5] to-[#8B5CF6] text-white py-3.5 rounded-xl hover:from-[#4338CA] hover:to-[#7C3AED] transition-all shadow-lg hover:shadow-xl font-bold transform hover:-translate-y-0.5"
+              disabled={!selectedTimeSlotId}
+              className="w-full bg-gradient-to-r from-[#4F46E5] to-[#8B5CF6] text-white py-3.5 rounded-xl hover:from-[#4338CA] hover:to-[#7C3AED] transition-all shadow-lg hover:shadow-xl font-bold transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Book Appointment
             </button>
@@ -215,7 +279,7 @@ export function BookingSystem() {
 
         {/* My Appointments */}
         <div className="bg-white rounded-2xl shadow-xl p-6 lg:p-8 border border-[#E2E8F0]">
-          <h3 className="text-[#1E293B] font-bold text-xl mb-6">My Appointments</h3>
+          <h3 className="text-[#1E293B] font-bold text-xl mb-6">My Recent Bookings</h3>
           
           <div className="space-y-4">
             {appointments.length === 0 ? (
@@ -223,7 +287,7 @@ export function BookingSystem() {
                 <div className="w-16 h-16 bg-gradient-to-br from-[#F1F5F9] to-[#E2E8F0] rounded-2xl flex items-center justify-center mx-auto mb-4">
                   <Calendar className="w-8 h-8 text-[#94A3B8]" />
                 </div>
-                <p className="text-[#94A3B8]">No appointments scheduled</p>
+                <p className="text-[#94A3B8]">No bookings made in this session yet.</p>
               </div>
             ) : (
               appointments.map(appointment => (
@@ -238,13 +302,7 @@ export function BookingSystem() {
                       </div>
                       <span className="text-[#1E293B] font-bold">{appointment.counsellor}</span>
                     </div>
-                    <span className={`px-3 py-1.5 rounded-lg text-xs font-bold ${
-                      appointment.status === 'upcoming'
-                        ? 'bg-gradient-to-r from-[#DBEAFE] to-[#BFDBFE] text-[#1E3A8A] border border-[#93C5FD]'
-                        : appointment.status === 'completed'
-                        ? 'bg-gradient-to-r from-[#D1FAE5] to-[#A7F3D0] text-[#065F46] border border-[#6EE7B7]'
-                        : 'bg-gradient-to-r from-[#F1F5F9] to-[#E2E8F0] text-[#475569] border border-[#CBD5E1]'
-                    }`}>
+                    <span className="px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-[#DBEAFE] to-[#BFDBFE] text-[#1E3A8A] border border-[#93C5FD]">
                       {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
                     </span>
                   </div>
@@ -269,18 +327,14 @@ export function BookingSystem() {
                       {appointment.type === 'in-person' && <MapPin className="w-4 h-4 text-[#8B5CF6]" />}
                       <span className="capitalize font-medium">{appointment.type} Session</span>
                     </div>
+                     {appointment.meeting_link && (
+                        <div className="mt-3 pt-3 border-t border-gray-100">
+                           <a href={appointment.meeting_link} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline text-sm font-medium">
+                                Join Meeting Link
+                           </a>
+                        </div>
+                    )}
                   </div>
-
-                  {appointment.status === 'upcoming' && (
-                    <div className="mt-4 pt-4 border-t border-[#F1F5F9] flex gap-3">
-                      <button className="flex-1 px-4 py-2.5 bg-gradient-to-r from-[#8B5CF6] to-[#7C3AED] text-white rounded-xl hover:from-[#7C3AED] hover:to-[#6D28D9] transition-all font-bold shadow-md hover:shadow-lg">
-                        Reschedule
-                      </button>
-                      <button className="flex-1 px-4 py-2.5 bg-[#F1F5F9] text-[#475569] rounded-xl hover:bg-[#E2E8F0] transition-all font-bold">
-                        Cancel
-                      </button>
-                    </div>
-                  )}
                 </div>
               ))
             )}

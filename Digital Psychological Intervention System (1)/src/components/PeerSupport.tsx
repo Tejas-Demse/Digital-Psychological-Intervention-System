@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { MessageCircle, ThumbsUp, Clock, Shield, Plus, Search } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { MessageCircle, ThumbsUp, Clock, Shield, Plus, Search, Loader2 } from 'lucide-react';
+import api from '../api/axios';
 
 interface Post {
   id: string;
@@ -13,63 +14,16 @@ interface Post {
   tags: string[];
 }
 
-const POSTS: Post[] = [
-  {
-    id: '1',
-    author: 'Anonymous Student',
-    isVolunteer: false,
-    timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
-    topic: 'Managing Exam Stress',
-    content: 'I have final exams coming up and feeling really overwhelmed. How do you all manage exam stress? Any tips would be helpful.',
-    likes: 12,
-    replies: 5,
-    tags: ['Stress', 'Exams', 'Academic']
-  },
-  {
-    id: '2',
-    author: 'Peer Volunteer Maya',
-    isVolunteer: true,
-    timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000),
-    topic: 'Self-Care During Busy Times',
-    content: 'Hi everyone! As a peer volunteer, I wanted to share some self-care tips that helped me during busy periods: 1) Schedule breaks, 2) Stay hydrated, 3) Connect with friends, 4) Practice 5-min meditation. What works for you?',
-    likes: 24,
-    replies: 8,
-    tags: ['Self-Care', 'Wellness', 'Tips']
-  },
-  {
-    id: '3',
-    author: 'Anonymous Student',
-    isVolunteer: false,
-    timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000),
-    topic: 'Feeling Isolated',
-    content: 'Is anyone else feeling disconnected from their peers? I moved to campus recently and finding it hard to make connections.',
-    likes: 8,
-    replies: 12,
-    tags: ['Social', 'Loneliness', 'Support']
-  },
-  {
-    id: '4',
-    author: 'Peer Volunteer Raj',
-    isVolunteer: true,
-    timestamp: new Date(Date.now() - 12 * 60 * 60 * 1000),
-    topic: 'Breathing Exercise for Anxiety',
-    content: 'Quick breathing technique for when anxiety hits: Box Breathing - Inhale for 4, Hold for 4, Exhale for 4, Hold for 4. Repeat 4 times. This activates your parasympathetic nervous system and helps calm you down. Try it!',
-    likes: 35,
-    replies: 6,
-    tags: ['Anxiety', 'Techniques', 'Mindfulness']
-  },
-  {
-    id: '5',
-    author: 'Anonymous Student',
-    isVolunteer: false,
-    timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000),
-    topic: 'Sleep Schedule Struggling',
-    content: 'My sleep schedule is completely messed up. I stay up late studying and then can\'t wake up for morning classes. Any advice on fixing sleep patterns?',
-    likes: 15,
-    replies: 9,
-    tags: ['Sleep', 'Wellness', 'Academic']
-  }
-];
+interface ApiPost {
+  id: string | number;
+  author_name: string;
+  is_volunteer: boolean;
+  topic: string;
+  content: string;
+  created_at: string;
+  likes: number;
+  tags: string[];
+}
 
 const TAGS = ['All', 'Stress', 'Anxiety', 'Academic', 'Social', 'Wellness', 'Self-Care'];
 
@@ -77,8 +31,33 @@ export function PeerSupport() {
   const [selectedTag, setSelectedTag] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [showNewPost, setShowNewPost] = useState(false);
+  const [posts, setPosts] = useState<ApiPost[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  // New Post State
+  const [newTopic, setNewTopic] = useState('');
+  const [newContent, setNewContent] = useState('');
+  const [newTags, setNewTags] = useState<string[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const filteredPosts = POSTS.filter(post => {
+  useEffect(() => {
+    fetchPosts();
+  }, [selectedTag]);
+
+  const fetchPosts = async () => {
+    try {
+      setLoading(true);
+      const url = selectedTag === 'All' ? '/community/posts/' : `/community/posts/?tag=${encodeURIComponent(selectedTag)}`;
+      const response = await api.get(url);
+      setPosts(response.data);
+    } catch (err) {
+      console.error('Failed to load posts', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredPosts = posts.filter(post => {
     const matchesTag = selectedTag === 'All' || post.tags.includes(selectedTag);
     const matchesSearch = post.topic.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          post.content.toLowerCase().includes(searchQuery.toLowerCase());
@@ -160,11 +139,38 @@ export function PeerSupport() {
       {showNewPost && (
         <div className="bg-white rounded-lg shadow-lg p-6">
           <h3 className="text-gray-900 mb-4">Create New Post</h3>
-          <form className="space-y-4">
+          <form 
+            onSubmit={async (e) => {
+              e.preventDefault();
+              if (!newTopic.trim() || !newContent.trim()) return;
+              setIsSubmitting(true);
+              try {
+                await api.post('/community/posts/', {
+                  topic: newTopic,
+                  content: newContent,
+                  tags: newTags,
+                  is_anonymous: true
+                });
+                setNewTopic('');
+                setNewContent('');
+                setNewTags([]);
+                setShowNewPost(false);
+                fetchPosts();
+              } catch (err) {
+                console.error('Failed to create post', err);
+              } finally {
+                setIsSubmitting(false);
+              }
+            }}
+            className="space-y-4"
+          >
             <div>
               <label className="block text-gray-700 mb-2">Topic</label>
               <input
                 type="text"
+                required
+                value={newTopic}
+                onChange={(e) => setNewTopic(e.target.value)}
                 placeholder="What would you like to discuss?"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               />
@@ -172,6 +178,9 @@ export function PeerSupport() {
             <div>
               <label className="block text-gray-700 mb-2">Content</label>
               <textarea
+                required
+                value={newContent}
+                onChange={(e) => setNewContent(e.target.value)}
                 placeholder="Share your thoughts... (Posts are anonymous)"
                 rows={4}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
@@ -182,7 +191,15 @@ export function PeerSupport() {
               <div className="flex flex-wrap gap-2">
                 {TAGS.slice(1).map(tag => (
                   <label key={tag} className="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
-                    <input type="checkbox" className="rounded" />
+                    <input 
+                      type="checkbox" 
+                      className="rounded"
+                      checked={newTags.includes(tag)}
+                      onChange={(e) => {
+                        if (e.target.checked) setNewTags(prev => [...prev, tag]);
+                        else setNewTags(prev => prev.filter(t => t !== tag));
+                      }}
+                    />
                     <span className="text-gray-700">{tag}</span>
                   </label>
                 ))}
@@ -191,9 +208,10 @@ export function PeerSupport() {
             <div className="flex gap-2">
               <button
                 type="submit"
-                className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all"
+                disabled={isSubmitting}
+                className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all flex items-center justify-center gap-2"
               >
-                Post Anonymously
+                {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Post Anonymously'}
               </button>
               <button
                 type="button"
@@ -208,6 +226,11 @@ export function PeerSupport() {
       )}
 
       {/* Posts */}
+      {loading ? (
+        <div className="flex items-center justify-center p-12">
+           <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+        </div>
+      ) : (
       <div className="space-y-4">
         {filteredPosts.map(post => (
           <div key={post.id} className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow">
@@ -215,24 +238,24 @@ export function PeerSupport() {
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-3">
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                  post.isVolunteer ? 'bg-purple-100' : 'bg-gray-100'
+                  post.is_volunteer ? 'bg-purple-100' : 'bg-gray-100'
                 }`}>
                   <MessageCircle className={`w-5 h-5 ${
-                    post.isVolunteer ? 'text-purple-600' : 'text-gray-600'
+                    post.is_volunteer ? 'text-purple-600' : 'text-gray-600'
                   }`} />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-gray-900">{post.author}</span>
-                    {post.isVolunteer && (
+                    <span className="text-gray-900">{post.author_name}</span>
+                    {post.is_volunteer && (
                       <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs rounded-full">
-                        Volunteer
+                        Volunteer / Admin
                       </span>
                     )}
                   </div>
                   <div className="flex items-center gap-2 text-gray-500 text-sm">
                     <Clock className="w-4 h-4" />
-                    <span>{getTimeAgo(post.timestamp)}</span>
+                    <span>{getTimeAgo(new Date(post.created_at))}</span>
                   </div>
                 </div>
               </div>
@@ -262,14 +285,15 @@ export function PeerSupport() {
               </button>
               <button className="flex items-center gap-2 text-gray-600 hover:text-purple-600 transition-colors">
                 <MessageCircle className="w-5 h-5" />
-                <span>{post.replies} Replies</span>
+                <span>0 Replies</span>
               </button>
             </div>
           </div>
         ))}
       </div>
+      )}
 
-      {filteredPosts.length === 0 && (
+      {(!loading && filteredPosts.length === 0) && (
         <div className="bg-white rounded-lg shadow-lg p-12 text-center">
           <p className="text-gray-500">No posts found matching your criteria.</p>
         </div>

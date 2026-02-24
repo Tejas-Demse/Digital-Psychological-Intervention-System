@@ -49,6 +49,9 @@ INSTALLED_APPS = [
     'users',
     'chat',
     'assessments',
+    'appointments',
+    'resources',
+    'community',
 ]
 
 MIDDLEWARE = [
@@ -139,11 +142,23 @@ CORS_ALLOWED_ORIGINS = [
 # Authentication Model
 AUTH_USER_MODEL = 'users.CustomUser'
 
+AUTHENTICATION_BACKENDS = [
+    'users.backends.EmailOrUsernameModelBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+
+from datetime import timedelta
+
 # REST Framework Setup
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
 }
 
 # MongoDB Configuration

@@ -1,5 +1,8 @@
 from django.urls import path
+from .views import QuestionnaireDetailView, SubmitAssessmentView, UserHistoryView
 
 urlpatterns = [
-    # Placeholder for assessments routes
+    path('history/', UserHistoryView.as_view(), name='assessment-history'),
+    path('submit/', SubmitAssessmentView.as_view(), name='assessment-submit'),
+    path('<int:pk>/', QuestionnaireDetailView.as_view(), name='assessment-detail'),
 ]

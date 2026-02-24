@@ -19,15 +19,15 @@ api.interceptors.request.use(
   (error) => Promise.reject(error),
 );
 
-// Response Interceptor: Handle Token Expiration
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    // If a request fails with 401 Unauthorized, we might need a refresh logic later.
-    // Right now, simply reject it.
     if (error.response?.status === 401) {
       console.warn("Unauthorized request - Token missing or expired.");
-      // Optional: Handle auto-logout mechanism here
+      // Automatically clear out the expired token and force a redirect
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      window.location.href = '/'; 
     }
     return Promise.reject(error);
   },

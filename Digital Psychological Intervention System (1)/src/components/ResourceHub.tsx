@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { Play, Headphones, BookOpen, Download, Globe, Search } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Play, Headphones, BookOpen, Download, Globe, Search, Loader2 } from 'lucide-react';
+import api from '../api/axios';
 
 interface Resource {
   id: string;
@@ -11,105 +12,38 @@ interface Resource {
   description: string;
 }
 
-const RESOURCES: Resource[] = [
-  {
-    id: '1',
-    title: 'Understanding Stress: A Student\'s Guide',
-    type: 'video',
-    category: 'Stress Management',
-    language: 'English',
-    duration: '12:30',
-    description: 'Learn about stress triggers and evidence-based coping mechanisms.'
-  },
-  {
-    id: '2',
-    title: 'Progressive Muscle Relaxation',
-    type: 'audio',
-    category: 'Relaxation',
-    language: 'English',
-    duration: '15:00',
-    description: 'Guided audio for deep relaxation and tension release.'
-  },
-  {
-    id: '3',
-    title: 'Mindfulness Meditation for Beginners',
-    type: 'audio',
-    category: 'Mindfulness',
-    language: 'Hindi',
-    duration: '10:00',
-    description: 'शुरुआती लोगों के लिए माइंडफुलनेस मेडिटेशन'
-  },
-  {
-    id: '4',
-    title: 'Exam Anxiety Management Toolkit',
-    type: 'guide',
-    category: 'Academic Stress',
-    language: 'English',
-    description: 'Practical strategies to manage exam-related anxiety and improve performance.'
-  },
-  {
-    id: '5',
-    title: 'Sleep Hygiene for Better Mental Health',
-    type: 'video',
-    category: 'Wellness',
-    language: 'English',
-    duration: '8:45',
-    description: 'Understanding the connection between sleep quality and mental wellbeing.'
-  },
-  {
-    id: '6',
-    title: 'Deep Breathing Exercises',
-    type: 'audio',
-    category: 'Relaxation',
-    language: 'Tamil',
-    duration: '8:00',
-    description: 'மன அமைதிக்கான ஆழ்ந்த சுவாசப் பயிற்சிகள்'
-  },
-  {
-    id: '7',
-    title: 'Building Resilience: A Comprehensive Guide',
-    type: 'guide',
-    category: 'Personal Growth',
-    language: 'English',
-    description: 'Develop mental toughness and bounce back from challenges stronger.'
-  },
-  {
-    id: '8',
-    title: 'Social Anxiety: Understanding & Coping',
-    type: 'video',
-    category: 'Anxiety',
-    language: 'Bengali',
-    duration: '14:20',
-    description: 'সামাজিক উদ্বেগ বোঝা এবং মোকাবেলা করা'
-  },
-  {
-    id: '9',
-    title: 'Evening Relaxation Soundscape',
-    type: 'audio',
-    category: 'Relaxation',
-    language: 'All',
-    duration: '20:00',
-    description: 'Calming nature sounds and gentle music for evening relaxation.'
-  },
-  {
-    id: '10',
-    title: 'Self-Care Strategies for Students',
-    type: 'guide',
-    category: 'Wellness',
-    language: 'English',
-    description: 'Practical daily self-care routines tailored for student life.'
-  }
-];
-
 const CATEGORIES = ['All', 'Stress Management', 'Relaxation', 'Mindfulness', 'Academic Stress', 'Wellness', 'Anxiety', 'Personal Growth'];
 const LANGUAGES = ['All', 'English', 'Hindi', 'Tamil', 'Bengali'];
 
 export function ResourceHub() {
+  const [resources, setResources] = useState<Resource[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedLanguage, setSelectedLanguage] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const filteredResources = RESOURCES.filter(resource => {
+  useEffect(() => {
+    const fetchResources = async () => {
+      try {
+        const res = await api.get('/resources/');
+        setResources(res.data.map((r: any) => ({
+            id: r.id.toString(),
+            title: r.title,
+            type: r.type === 'article' || r.type === 'guide' || r.type === 'exam_tip' || r.type === 'wellness_guide' ? 'guide' : r.type,
+            category: r.category || 'Wellness',
+            language: 'English',
+            description: r.description || r.content?.substring(0, 100) || '',
+        })));
+      } catch (err) {
+        console.error("Failed to fetch resources", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchResources();
+  }, []);
+
+  const filteredResources = resources.filter(resource => {
     const matchesCategory = selectedCategory === 'All' || resource.category === selectedCategory;
     const matchesLanguage = selectedLanguage === 'All' || resource.language === selectedLanguage || resource.language === 'All';
     const matchesSearch = resource.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -118,27 +52,30 @@ export function ResourceHub() {
     return matchesCategory && matchesLanguage && matchesSearch;
   });
 
-  const getIcon = (type: Resource['type']) => {
+  const getIcon = (type: string) => {
     switch (type) {
-      case 'video':
-        return Play;
-      case 'audio':
-        return Headphones;
-      case 'guide':
-        return BookOpen;
+      case 'video': return Play;
+      case 'audio': return Headphones;
+      default: return BookOpen;
     }
   };
 
-  const getTypeColor = (type: Resource['type']) => {
+  const getTypeColor = (type: string) => {
     switch (type) {
-      case 'video':
-        return 'bg-red-100 text-red-700';
-      case 'audio':
-        return 'bg-green-100 text-green-700';
-      case 'guide':
-        return 'bg-blue-100 text-blue-700';
+      case 'video': return 'text-red-700 bg-red-50';
+      case 'audio': return 'text-green-700 bg-green-50';
+      default: return 'text-blue-700 bg-blue-50';
     }
   };
+
+  if (loading) {
+     return (
+       <div className="flex justify-center items-center py-20">
+         <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+         <span className="ml-3 text-gray-500 font-medium">Loading educational resources...</span>
+       </div>
+     );
+  }
 
   return (
     <div className="space-y-6">
@@ -150,27 +87,28 @@ export function ResourceHub() {
       </div>
 
       {/* Search and Filters */}
-      <div className="bg-white rounded-lg shadow-lg p-6 space-y-4">
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search resources..."
-            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-          />
-        </div>
+      <div className="bg-white rounded-lg shadow-lg p-6">
+        <div className="grid md:grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-1">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Search</label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search resources..."
+                className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+              />
+            </div>
+          </div>
 
-        {/* Filters */}
-        <div className="grid md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-gray-700 mb-2">Category</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
             >
               {CATEGORIES.map(category => (
                 <option key={category} value={category}>{category}</option>
@@ -179,14 +117,11 @@ export function ResourceHub() {
           </div>
 
           <div>
-            <label className="block text-gray-700 mb-2">
-              <Globe className="w-4 h-4 inline mr-1" />
-              Language
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Language</label>
             <select
               value={selectedLanguage}
               onChange={(e) => setSelectedLanguage(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
             >
               {LANGUAGES.map(language => (
                 <option key={language} value={language}>{language}</option>
@@ -197,62 +132,73 @@ export function ResourceHub() {
       </div>
 
       {/* Resources Grid */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredResources.map(resource => {
-          const Icon = getIcon(resource.type);
-          return (
-            <div
-              key={resource.id}
-              className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow"
-            >
-              {/* Thumbnail */}
-              <div className="h-40 bg-gradient-to-br from-purple-400 to-blue-500 flex items-center justify-center">
-                <Icon className="w-16 h-16 text-white" />
-              </div>
-
-              {/* Content */}
-              <div className="p-4">
-                <div className="flex items-start justify-between mb-2">
-                  <span className={`px-3 py-1 rounded-full text-xs ${getTypeColor(resource.type)}`}>
-                    {resource.type.charAt(0).toUpperCase() + resource.type.slice(1)}
-                  </span>
-                  {resource.duration && (
-                    <span className="text-gray-500 text-sm">{resource.duration}</span>
-                  )}
-                </div>
-
-                <h3 className="text-gray-900 mb-2">{resource.title}</h3>
-                <p className="text-gray-600 text-sm mb-3 line-clamp-2">{resource.description}</p>
-
-                <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
-                  <span className="flex items-center gap-1">
-                    <Globe className="w-4 h-4" />
-                    {resource.language}
-                  </span>
-                  <span>{resource.category}</span>
-                </div>
-
-                <div className="flex gap-2">
-                  <button className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all">
-                    {resource.type === 'guide' ? 'Read' : 'Play'}
-                  </button>
-                  {resource.type === 'guide' && (
-                    <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
-                      <Download className="w-5 h-5" />
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {filteredResources.length === 0 && (
-        <div className="bg-white rounded-lg shadow-lg p-12 text-center">
-          <p className="text-gray-500">No resources found matching your criteria.</p>
+      <div className="bg-white rounded-lg shadow-lg p-6">
+        <div className="flex items-center gap-2 mb-6">
+          <BookOpen className="w-6 h-6 text-blue-600" />
+          <h3 className="text-gray-900">Available Materials</h3>
         </div>
-      )}
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredResources.map(resource => {
+            const Icon = getIcon(resource.type);
+            const typeColor = getTypeColor(resource.type);
+            
+            return (
+              <div
+                key={resource.id}
+                className="border border-gray-200 rounded-lg overflow-hidden flex flex-col hover:border-blue-300 hover:shadow-md transition-all bg-white"
+              >
+                {/* Header Icon Area */}
+                <div className={`p-4 flex items-center justify-between border-b border-gray-100 ${typeColor}`}>
+                  <div className="flex items-center gap-2">
+                    <Icon className="w-5 h-5" />
+                    <span className="font-semibold text-sm capitalize">{resource.type}</span>
+                  </div>
+                  {resource.duration && (
+                    <span className="text-sm font-medium opacity-80">{resource.duration}</span>
+                  )}
+                </div>
+
+                {/* Content */}
+                <div className="p-4 flex-1 flex flex-col">
+                  <h4 className="text-gray-900 font-medium mb-2 line-clamp-2 title-font">{resource.title}</h4>
+                  <p className="text-gray-600 text-sm mb-4 line-clamp-3 flex-1">{resource.description}</p>
+
+                  {/* Metadata */}
+                  <div className="flex items-center justify-between text-xs text-gray-500 mb-4">
+                    <span className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded">
+                      <Globe className="w-3 h-3" />
+                      {resource.language}
+                    </span>
+                    <span className="bg-gray-100 px-2 py-1 rounded">
+                      {resource.category}
+                    </span>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-2 mt-auto">
+                    <button className="flex-1 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium flex items-center justify-center gap-2">
+                      <Play className="w-4 h-4" />
+                      {resource.type === 'guide' ? 'Read' : 'Play'}
+                    </button>
+                    {resource.type === 'guide' && (
+                      <button className="px-3 py-2 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 border border-gray-200 transition-colors" title="Download">
+                        <Download className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        
+        {filteredResources.length === 0 && (
+          <div className="p-8 text-center bg-gray-50 border border-gray-200 rounded-lg mt-6">
+            <p className="text-gray-500">No resources found matching your search criteria.</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

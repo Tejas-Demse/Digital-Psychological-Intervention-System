@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Phone, AlertCircle, Heart, Shield, MapPin, Clock, Languages, ExternalLink } from 'lucide-react';
+import { Phone, AlertCircle, Heart, Shield, MapPin, Clock, Languages, ExternalLink, BellRing } from 'lucide-react';
+import api from '../api/axios';
 
 interface Helpline {
   name: string;
@@ -104,6 +105,22 @@ const HELPLINES: Helpline[] = [
 export function CrisisSafety() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [showEmergencyConfirm, setShowEmergencyConfirm] = useState(false);
+  const [isSosLoading, setIsSosLoading] = useState(false);
+  const [sosMessage, setSosMessage] = useState('');
+
+  const handleSosAlert = async () => {
+    setIsSosLoading(true);
+    setSosMessage('');
+    try {
+      const res = await api.post('/users/sos/');
+      setSosMessage(res.data.message || 'SOS Alert triggered successfully. Our team has been notified.');
+    } catch (err) {
+      console.error("Failed to trigger SOS", err);
+      setSosMessage('Failed to connect to the server. Please call emergency services directly.');
+    } finally {
+      setIsSosLoading(false);
+    }
+  };
 
   const filteredHelplines = selectedCategory === 'all' 
     ? HELPLINES 
@@ -176,7 +193,22 @@ export function CrisisSafety() {
             please reach out for help right now.
           </p>
 
+          {sosMessage && (
+            <div className={`p-4 mb-4 rounded-xl font-bold ${sosMessage.includes('Failed') ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+              {sosMessage}
+            </div>
+          )}
+
           <div className="space-y-3">
+            <button
+               onClick={handleSosAlert}
+               disabled={isSosLoading}
+               className="w-full px-6 py-4 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all flex items-center justify-center gap-3 text-lg shadow-xl font-black uppercase tracking-wider animate-pulse hover:animate-none disabled:opacity-50"
+            >
+               <BellRing className="w-7 h-7" />
+               {isSosLoading ? 'Triggering SOS...' : 'TRIGGER SOS ALERT'}
+            </button>
+
             <button
               onClick={() => setShowEmergencyConfirm(true)}
               className="w-full px-6 py-4 bg-gradient-to-r from-[#EF4444] to-[#DC2626] text-white rounded-xl hover:from-[#DC2626] hover:to-[#B91C1C] transition-all flex items-center justify-center gap-3 text-lg shadow-lg hover:shadow-xl font-bold transform hover:-translate-y-0.5"

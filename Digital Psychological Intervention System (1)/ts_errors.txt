@@ -1,0 +1,23 @@
+﻿node_modules/react-router-dom/dist/index.d.ts(1,69): error TS2307: Cannot find module 'react-router/dom' or its corresponding type declarations.
+  There are types at 'D:/COMP ENGG/SEM 5/AICTE/AICTE-final/Digital Psychological Intervention System (1)/node_modules/react-router/dist/development/dom-export.d.mts', but this result could not be resolved under your current 'moduleResolution' setting. Consider updating to 'node16', 'nodenext', or 'bundler'.
+node_modules/react-router/dist/development/instrumentation-DvHY1sgY.d.ts(408,5): error TS18028: Private identifiers are only available when targeting ECMAScript 2015 and higher.
+src/api/axios.ts(4,12): error TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.
+src/api/axios.ts(4,24): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+src/App.tsx(3,27): error TS6142: Module './components/LoginPage' was resolved to 'D:/COMP ENGG/SEM 5/AICTE/AICTE-final/Digital Psychological Intervention System (1)/src/components/LoginPage.tsx', but '--jsx' is not set.
+src/App.tsx(4,34): error TS6142: Module './components/StudentDashboard' was resolved to 'D:/COMP ENGG/SEM 5/AICTE/AICTE-final/Digital Psychological Intervention System (1)/src/components/StudentDashboard.tsx', but '--jsx' is not set.
+src/App.tsx(5,32): error TS6142: Module './components/AdminDashboard' was resolved to 'D:/COMP ENGG/SEM 5/AICTE/AICTE-final/Digital Psychological Intervention System (1)/src/components/AdminDashboard.tsx', but '--jsx' is not set.
+src/App.tsx(28,5): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/App.tsx(29,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/App.tsx(30,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/App.tsx(32,27): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/App.tsx(32,58): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/App.tsx(34,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/App.tsx(37,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/App.tsx(38,37): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/App.tsx(39,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/App.tsx(43,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/App.tsx(43,45): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/App.tsx(44,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/App.tsx(44,38): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/App.tsx(45,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/App.tsx(45,43): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.

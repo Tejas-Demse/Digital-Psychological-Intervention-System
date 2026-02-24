@@ -1,11 +1,31 @@
 import { useState, useEffect } from 'react';
 import { Timer, Coffee, Brain, Lightbulb, Play, Pause, RotateCcw, Bell } from 'lucide-react';
+import api from '../api/axios';
 
 export function ExamToolkit() {
   const [pomodoroTime, setPomodoroTime] = useState(25 * 60); // 25 minutes in seconds
   const [isRunning, setIsRunning] = useState(false);
   const [isBreak, setIsBreak] = useState(false);
   const [showBreakReminder, setShowBreakReminder] = useState(false);
+  const [dynamicTips, setDynamicTips] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchTips = async () => {
+      try {
+        const res = await api.get('/resources/?type=exam_tip');
+        if (res.data) {
+          setDynamicTips(res.data.map((t: any) => ({
+             title: t.title,
+             tip: t.description || t.content || '',
+             category: t.category || 'Expert Tip'
+          })));
+        }
+      } catch (err) {
+        console.error("Failed to fetch exam tips", err);
+      }
+    };
+    fetchTips();
+  }, []);
 
   useEffect(() => {
     let interval: number | undefined;
@@ -300,14 +320,14 @@ export function ExamToolkit() {
         </div>
 
         <div className="grid md:grid-cols-2 gap-4">
-          {PRODUCTIVITY_TIPS.map((tip, index) => (
+          {[...dynamicTips, ...PRODUCTIVITY_TIPS].map((tip, index) => (
             <div
               key={index}
-              className="border border-gray-200 rounded-lg p-4 hover:border-amber-300 hover:shadow-md transition-all"
+              className={`border rounded-lg p-4 transition-all ${index < dynamicTips.length ? 'border-purple-200 bg-purple-50/30 hover:border-purple-300' : 'border-gray-200 hover:border-amber-300'} hover:shadow-md`}
             >
               <div className="flex items-start justify-between mb-2">
                 <h4 className="text-gray-900">{tip.title}</h4>
-                <span className="px-2 py-1 bg-amber-100 text-amber-700 text-xs rounded-full whitespace-nowrap">
+                <span className={`px-2 py-1 text-xs rounded-full whitespace-nowrap ${index < dynamicTips.length ? 'bg-purple-100 text-purple-700' : 'bg-amber-100 text-amber-700'}`}>
                   {tip.category}
                 </span>
               </div>

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ClipboardList, ArrowRight, ArrowLeft, Heart, CheckCircle, Info, Phone, Calendar, BookOpen, Shield, Pause, X } from 'lucide-react';
+import api from '../api/axios';
 
 type AssessmentType = 'PHQ-9' | 'GAD-7' | 'GHQ-12' | null;
 type Screen = 'select' | 'disclaimer' | 'questions' | 'results';
@@ -10,338 +11,109 @@ interface Question {
   options: { value: number; label: string }[];
 }
 
-const PHQ9_QUESTIONS: Question[] = [
-  {
-    id: 'phq1',
-    text: 'Little interest or pleasure in doing things',
-    options: [
-      { value: 0, label: 'Not at all' },
-      { value: 1, label: 'Several days' },
-      { value: 2, label: 'More than half the days' },
-      { value: 3, label: 'Nearly every day' }
-    ]
-  },
-  {
-    id: 'phq2',
-    text: 'Feeling down, depressed, or hopeless',
-    options: [
-      { value: 0, label: 'Not at all' },
-      { value: 1, label: 'Several days' },
-      { value: 2, label: 'More than half the days' },
-      { value: 3, label: 'Nearly every day' }
-    ]
-  },
-  {
-    id: 'phq3',
-    text: 'Trouble falling asleep, staying asleep, or sleeping too much',
-    options: [
-      { value: 0, label: 'Not at all' },
-      { value: 1, label: 'Several days' },
-      { value: 2, label: 'More than half the days' },
-      { value: 3, label: 'Nearly every day' }
-    ]
-  },
-  {
-    id: 'phq4',
-    text: 'Feeling tired or having little energy',
-    options: [
-      { value: 0, label: 'Not at all' },
-      { value: 1, label: 'Several days' },
-      { value: 2, label: 'More than half the days' },
-      { value: 3, label: 'Nearly every day' }
-    ]
-  },
-  {
-    id: 'phq5',
-    text: 'Poor appetite or overeating',
-    options: [
-      { value: 0, label: 'Not at all' },
-      { value: 1, label: 'Several days' },
-      { value: 2, label: 'More than half the days' },
-      { value: 3, label: 'Nearly every day' }
-    ]
-  },
-  {
-    id: 'phq6',
-    text: 'Feeling bad about yourself - or that you\'re a failure or have let yourself or your family down',
-    options: [
-      { value: 0, label: 'Not at all' },
-      { value: 1, label: 'Several days' },
-      { value: 2, label: 'More than half the days' },
-      { value: 3, label: 'Nearly every day' }
-    ]
-  },
-  {
-    id: 'phq7',
-    text: 'Trouble concentrating on things, such as reading or watching videos',
-    options: [
-      { value: 0, label: 'Not at all' },
-      { value: 1, label: 'Several days' },
-      { value: 2, label: 'More than half the days' },
-      { value: 3, label: 'Nearly every day' }
-    ]
-  },
-  {
-    id: 'phq8',
-    text: 'Moving or speaking so slowly that other people could have noticed, or being so fidgety or restless that you have been moving around a lot more than usual',
-    options: [
-      { value: 0, label: 'Not at all' },
-      { value: 1, label: 'Several days' },
-      { value: 2, label: 'More than half the days' },
-      { value: 3, label: 'Nearly every day' }
-    ]
-  },
-  {
-    id: 'phq9',
-    text: 'Thoughts that you would be better off dead or of hurting yourself in some way',
-    options: [
-      { value: 0, label: 'Not at all' },
-      { value: 1, label: 'Several days' },
-      { value: 2, label: 'More than half the days' },
-      { value: 3, label: 'Nearly every day' }
-    ]
-  }
-];
-
-const GAD7_QUESTIONS: Question[] = [
-  {
-    id: 'gad1',
-    text: 'Feeling nervous, anxious, or on edge',
-    options: [
-      { value: 0, label: 'Not at all' },
-      { value: 1, label: 'Several days' },
-      { value: 2, label: 'More than half the days' },
-      { value: 3, label: 'Nearly every day' }
-    ]
-  },
-  {
-    id: 'gad2',
-    text: 'Not being able to stop or control worrying',
-    options: [
-      { value: 0, label: 'Not at all' },
-      { value: 1, label: 'Several days' },
-      { value: 2, label: 'More than half the days' },
-      { value: 3, label: 'Nearly every day' }
-    ]
-  },
-  {
-    id: 'gad3',
-    text: 'Worrying too much about different things',
-    options: [
-      { value: 0, label: 'Not at all' },
-      { value: 1, label: 'Several days' },
-      { value: 2, label: 'More than half the days' },
-      { value: 3, label: 'Nearly every day' }
-    ]
-  },
-  {
-    id: 'gad4',
-    text: 'Trouble relaxing',
-    options: [
-      { value: 0, label: 'Not at all' },
-      { value: 1, label: 'Several days' },
-      { value: 2, label: 'More than half the days' },
-      { value: 3, label: 'Nearly every day' }
-    ]
-  },
-  {
-    id: 'gad5',
-    text: 'Being so restless that it\'s hard to sit still',
-    options: [
-      { value: 0, label: 'Not at all' },
-      { value: 1, label: 'Several days' },
-      { value: 2, label: 'More than half the days' },
-      { value: 3, label: 'Nearly every day' }
-    ]
-  },
-  {
-    id: 'gad6',
-    text: 'Becoming easily annoyed or irritable',
-    options: [
-      { value: 0, label: 'Not at all' },
-      { value: 1, label: 'Several days' },
-      { value: 2, label: 'More than half the days' },
-      { value: 3, label: 'Nearly every day' }
-    ]
-  },
-  {
-    id: 'gad7',
-    text: 'Feeling afraid as if something awful might happen',
-    options: [
-      { value: 0, label: 'Not at all' },
-      { value: 1, label: 'Several days' },
-      { value: 2, label: 'More than half the days' },
-      { value: 3, label: 'Nearly every day' }
-    ]
-  }
-];
-
-const GHQ12_QUESTIONS: Question[] = [
-  {
-    id: 'ghq1',
-    text: 'Been able to concentrate on what you\'re doing',
-    options: [
-      { value: 0, label: 'Better than usual' },
-      { value: 0, label: 'Same as usual' },
-      { value: 1, label: 'Less than usual' },
-      { value: 1, label: 'Much less than usual' }
-    ]
-  },
-  {
-    id: 'ghq2',
-    text: 'Lost much sleep over worry',
-    options: [
-      { value: 0, label: 'Not at all' },
-      { value: 0, label: 'No more than usual' },
-      { value: 1, label: 'Rather more than usual' },
-      { value: 1, label: 'Much more than usual' }
-    ]
-  },
-  {
-    id: 'ghq3',
-    text: 'Felt that you are playing a useful part in things',
-    options: [
-      { value: 0, label: 'More so than usual' },
-      { value: 0, label: 'Same as usual' },
-      { value: 1, label: 'Less so than usual' },
-      { value: 1, label: 'Much less than usual' }
-    ]
-  },
-  {
-    id: 'ghq4',
-    text: 'Felt capable of making decisions about things',
-    options: [
-      { value: 0, label: 'More so than usual' },
-      { value: 0, label: 'Same as usual' },
-      { value: 1, label: 'Less so than usual' },
-      { value: 1, label: 'Much less than usual' }
-    ]
-  },
-  {
-    id: 'ghq5',
-    text: 'Felt constantly under strain',
-    options: [
-      { value: 0, label: 'Not at all' },
-      { value: 0, label: 'No more than usual' },
-      { value: 1, label: 'Rather more than usual' },
-      { value: 1, label: 'Much more than usual' }
-    ]
-  },
-  {
-    id: 'ghq6',
-    text: 'Felt you couldn\'t overcome your difficulties',
-    options: [
-      { value: 0, label: 'Not at all' },
-      { value: 0, label: 'No more than usual' },
-      { value: 1, label: 'Rather more than usual' },
-      { value: 1, label: 'Much more than usual' }
-    ]
-  },
-  {
-    id: 'ghq7',
-    text: 'Been able to enjoy your normal day-to-day activities',
-    options: [
-      { value: 0, label: 'More so than usual' },
-      { value: 0, label: 'Same as usual' },
-      { value: 1, label: 'Less so than usual' },
-      { value: 1, label: 'Much less than usual' }
-    ]
-  },
-  {
-    id: 'ghq8',
-    text: 'Been able to face up to your problems',
-    options: [
-      { value: 0, label: 'More so than usual' },
-      { value: 0, label: 'Same as usual' },
-      { value: 1, label: 'Less so than usual' },
-      { value: 1, label: 'Much less than usual' }
-    ]
-  },
-  {
-    id: 'ghq9',
-    text: 'Been feeling unhappy and depressed',
-    options: [
-      { value: 0, label: 'Not at all' },
-      { value: 0, label: 'No more than usual' },
-      { value: 1, label: 'Rather more than usual' },
-      { value: 1, label: 'Much more than usual' }
-    ]
-  },
-  {
-    id: 'ghq10',
-    text: 'Been losing confidence in yourself',
-    options: [
-      { value: 0, label: 'Not at all' },
-      { value: 0, label: 'No more than usual' },
-      { value: 1, label: 'Rather more than usual' },
-      { value: 1, label: 'Much more than usual' }
-    ]
-  },
-  {
-    id: 'ghq11',
-    text: 'Been thinking of yourself as a worthless person',
-    options: [
-      { value: 0, label: 'Not at all' },
-      { value: 0, label: 'No more than usual' },
-      { value: 1, label: 'Rather more than usual' },
-      { value: 1, label: 'Much more than usual' }
-    ]
-  },
-  {
-    id: 'ghq12',
-    text: 'Been feeling reasonably happy, all things considered',
-    options: [
-      { value: 0, label: 'More so than usual' },
-      { value: 0, label: 'Same as usual' },
-      { value: 1, label: 'Less so than usual' },
-      { value: 1, label: 'Much less than usual' }
-    ]
-  }
-];
-
 export function SelfAssessment() {
   const [screen, setScreen] = useState<Screen>('select');
   const [selectedAssessment, setSelectedAssessment] = useState<AssessmentType>(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [questions, setQuestions] = useState<Question[]>([]);
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [showPauseModal, setShowPauseModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [severityResult, setSeverityResult] = useState<{level: string, score: number, color: string, bgColor: string} | null>(null);
 
-  const getQuestions = (): Question[] => {
-    switch (selectedAssessment) {
-      case 'PHQ-9':
-        return PHQ9_QUESTIONS;
-      case 'GAD-7':
-        return GAD7_QUESTIONS;
-      case 'GHQ-12':
-        return GHQ12_QUESTIONS;
-      default:
-        return [];
-    }
-  };
-
-  const questions = getQuestions();
   const totalQuestions = questions.length;
   const progress = totalQuestions > 0 ? ((currentQuestion + 1) / totalQuestions) * 100 : 0;
 
-  const handleSelectAssessment = (type: AssessmentType) => {
+  const getOptionsForType = (type: AssessmentType) => {
+    if (type === 'GHQ-12') {
+      return [
+        { value: 0, label: 'Better than usual' },
+        { value: 1, label: 'Same as usual' },
+        { value: 2, label: 'Less than usual' },
+        { value: 3, label: 'Much less than usual' }
+      ];
+    }
+    return [
+      { value: 0, label: 'Not at all' },
+      { value: 1, label: 'Several days' },
+      { value: 2, label: 'More than half the days' },
+      { value: 3, label: 'Nearly every day' }
+    ];
+  };
+
+  const assessmentMap: Record<string, number> = {
+    'PHQ-9': 1,
+    'GAD-7': 2,
+    'GHQ-12': 3
+  };
+
+  const handleSelectAssessment = async (type: AssessmentType) => {
     setSelectedAssessment(type);
     setScreen('disclaimer');
     setCurrentQuestion(0);
     setAnswers({});
+    setSeverityResult(null);
+
+    const qId = type ? assessmentMap[type] : null;
+    if (qId) {
+      setIsLoading(true);
+      try {
+        const res = await api.get(`/assessments/${qId}/`);
+        const fetchedQuestions = res.data.questions.map((q: any) => ({
+          id: q.id.toString(),
+          text: q.text,
+          options: getOptionsForType(type)
+        }));
+        setQuestions(fetchedQuestions);
+      } catch (err) {
+        console.error("Failed to fetch assessment from backend", err);
+      } finally {
+        setIsLoading(false);
+      }
+    } else {
+      setQuestions([]);
+    }
   };
 
   const handleStartAssessment = () => {
     setScreen('questions');
   };
 
-  const handleAnswer = (value: number) => {
+  const handleAnswer = async (value: number) => {
     const question = questions[currentQuestion];
-    setAnswers({ ...answers, [question.id]: value });
+    const newAnswers = { ...answers, [question.id]: value };
+    setAnswers(newAnswers);
 
     if (currentQuestion < totalQuestions - 1) {
       setCurrentQuestion(currentQuestion + 1);
     } else {
-      setScreen('results');
+      // Submitting the test securely to backend for server-side scoring
+      setIsLoading(true);
+      try {
+        const qId = selectedAssessment ? assessmentMap[selectedAssessment] : 1;
+        const res = await api.post('/assessments/submit/', {
+          questionnaire_id: qId,
+          answers: newAnswers
+        });
+        
+        const label = res.data.severity_label;
+        let color = 'text-blue-700';
+        let bgColor = 'bg-blue-50';
+        
+        if (label === 'Minimal') { color = 'text-green-700'; bgColor = 'bg-green-50'; }
+        else if (label === 'Mild') { color = 'text-blue-700'; bgColor = 'bg-blue-50'; }
+        else if (label === 'Moderate') { color = 'text-amber-700'; bgColor = 'bg-amber-50'; }
+        else if (label === 'Moderately Severe') { color = 'text-orange-700'; bgColor = 'bg-orange-50'; }
+        else if (label === 'Severe') { color = 'text-red-700'; bgColor = 'bg-red-50'; }
+
+        setSeverityResult({ level: label, score: res.data.total_score, color, bgColor });
+      } catch (err) {
+        console.error("Failed to submit assessment", err);
+        setSeverityResult({ level: "Submission Error", score: 0, color: 'text-red-700', bgColor: 'bg-red-50' });
+      } finally {
+         setIsLoading(false);
+         setScreen('results');
+      }
     }
   };
 
@@ -365,30 +137,6 @@ export function SelfAssessment() {
     setSelectedAssessment(null);
     setCurrentQuestion(0);
     setAnswers({});
-  };
-
-  const calculateScore = (): number => {
-    return Object.values(answers).reduce((sum, val) => sum + val, 0);
-  };
-
-  const getSeverityLevel = (score: number, type: AssessmentType): { level: string; color: string; bgColor: string } => {
-    if (type === 'PHQ-9') {
-      if (score <= 4) return { level: 'Minimal', color: 'text-green-700', bgColor: 'bg-green-50' };
-      if (score <= 9) return { level: 'Mild', color: 'text-blue-700', bgColor: 'bg-blue-50' };
-      if (score <= 14) return { level: 'Moderate', color: 'text-amber-700', bgColor: 'bg-amber-50' };
-      if (score <= 19) return { level: 'Moderately Severe', color: 'text-orange-700', bgColor: 'bg-orange-50' };
-      return { level: 'Severe', color: 'text-red-700', bgColor: 'bg-red-50' };
-    } else if (type === 'GAD-7') {
-      if (score <= 4) return { level: 'Minimal', color: 'text-green-700', bgColor: 'bg-green-50' };
-      if (score <= 9) return { level: 'Mild', color: 'text-blue-700', bgColor: 'bg-blue-50' };
-      if (score <= 14) return { level: 'Moderate', color: 'text-amber-700', bgColor: 'bg-amber-50' };
-      return { level: 'Severe', color: 'text-red-700', bgColor: 'bg-red-50' };
-    } else if (type === 'GHQ-12') {
-      if (score <= 2) return { level: 'Low Distress', color: 'text-green-700', bgColor: 'bg-green-50' };
-      if (score <= 6) return { level: 'Moderate Distress', color: 'text-amber-700', bgColor: 'bg-amber-50' };
-      return { level: 'High Distress', color: 'text-red-700', bgColor: 'bg-red-50' };
-    }
-    return { level: 'Unknown', color: 'text-gray-700', bgColor: 'bg-gray-50' };
   };
 
   // Selection Screen
@@ -636,9 +384,8 @@ export function SelfAssessment() {
 
   // Results Screen
   if (screen === 'results' && selectedAssessment) {
-    const score = calculateScore();
-    const severity = getSeverityLevel(score, selectedAssessment);
     const answeredQuestions = Object.keys(answers).length;
+    const severity = severityResult || { level: 'Unknown', score: 0, bgColor: 'bg-gray-50', color: 'text-gray-700' };
 
     return (
       <div className="max-w-3xl mx-auto space-y-6">
@@ -648,13 +395,13 @@ export function SelfAssessment() {
           </div>
 
           <h2 className="text-gray-900 text-center mb-2">Assessment Complete</h2>
-          <p className="text-gray-600 text-center mb-8">Thank you for taking the time to check in with yourself.</p>
+          <p className="text-gray-600 text-center mb-8">Your responses have been securely scored and saved to your history.</p>
 
           {/* Results Summary */}
           <div className={`${severity.bgColor} border-2 ${severity.color.replace('text-', 'border-')} rounded-lg p-6 mb-8`}>
             <div className="text-center">
-              <p className="text-gray-600 text-sm mb-2">Your {selectedAssessment} results indicate:</p>
-              <p className={`${severity.color} text-3xl mb-3`}>{severity.level}</p>
+              <p className="text-gray-600 text-sm mb-2">Your {selectedAssessment} total score is {severity.score}, indicating:</p>
+              <p className={`${severity.color} text-3xl font-bold mb-3`}>{severity.level}</p>
               <p className="text-gray-500 text-sm">Based on {answeredQuestions} out of {totalQuestions} questions answered</p>
             </div>
           </div>

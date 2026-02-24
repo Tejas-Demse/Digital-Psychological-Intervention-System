@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import api from '../api/axios';
 import { 
   BarChart3, 
   Users, 
@@ -64,6 +65,26 @@ const PEAK_HOURS_DATA = [
 
 export function AdminDashboard({ user, onLogout }: AdminDashboardProps) {
   const [timeRange, setTimeRange] = useState('6months');
+  const [stats, setStats] = useState({
+    total_users: 0,
+    active_counselors: 0,
+    total_appointments: 0,
+    upcoming_appointments: 0,
+  });
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await api.get('/users/dashboard/admin/');
+        if (res.data) {
+          setStats(res.data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch admin stats:", err);
+      }
+    };
+    fetchStats();
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
@@ -133,10 +154,10 @@ export function AdminDashboard({ user, onLogout }: AdminDashboardProps) {
                 +12%
               </span>
             </div>
-            <p className="text-[#64748B] text-sm font-medium mb-1">Active Users</p>
-            <p className="text-[#1E293B] text-3xl font-bold">1,247</p>
+            <p className="text-[#64748B] text-sm font-medium mb-1">Total Users</p>
+            <p className="text-[#1E293B] text-3xl font-bold">{stats.total_users}</p>
             <div className="mt-3 pt-3 border-t border-[#F1F5F9]">
-              <p className="text-[#94A3B8] text-xs">↑ 142 from last period</p>
+              <p className="text-[#94A3B8] text-xs">Platform members</p>
             </div>
           </div>
 
@@ -152,9 +173,9 @@ export function AdminDashboard({ user, onLogout }: AdminDashboardProps) {
               </span>
             </div>
             <p className="text-[#64748B] text-sm font-medium mb-1">Total Sessions</p>
-            <p className="text-[#1E293B] text-3xl font-bold">450</p>
+            <p className="text-[#1E293B] text-3xl font-bold">{stats.total_appointments}</p>
             <div className="mt-3 pt-3 border-t border-[#F1F5F9]">
-              <p className="text-[#94A3B8] text-xs">↑ 34 from last period</p>
+              <p className="text-[#94A3B8] text-xs">Upcoming: {stats.upcoming_appointments}</p>
             </div>
           </div>
 
@@ -169,10 +190,10 @@ export function AdminDashboard({ user, onLogout }: AdminDashboardProps) {
                 +15%
               </span>
             </div>
-            <p className="text-[#64748B] text-sm font-medium mb-1">AI Interactions</p>
-            <p className="text-[#1E293B] text-3xl font-bold">2,834</p>
+            <p className="text-[#64748B] text-sm font-medium mb-1">Active Counselors</p>
+            <p className="text-[#1E293B] text-3xl font-bold">{stats.active_counselors}</p>
             <div className="mt-3 pt-3 border-t border-[#F1F5F9]">
-              <p className="text-[#94A3B8] text-xs">↑ 369 from last period</p>
+              <p className="text-[#94A3B8] text-xs">Counseling staff available</p>
             </div>
           </div>
 

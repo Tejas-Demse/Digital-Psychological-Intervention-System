@@ -1,52 +1,41 @@
 import { useState } from 'react';
 import { Heart, Lock, Mail, Info, Sparkles } from 'lucide-react';
-import type { User } from '../App';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import api from '../api/axios';
 
-interface LoginPageProps {
-  onLogin: (user: User) => void;
-}
-
-const DEMO_CREDENTIALS = [
-  {
-    email: 'student@demo.com',
-    password: 'student123',
-    user: {
-      id: '1',
-      name: 'Alex Johnson',
-      email: 'student@demo.com',
-      role: 'student' as const
-    }
-  },
-  {
-    email: 'admin@demo.com',
-    password: 'admin123',
-    user: {
-      id: '2',
-      name: 'Dr. Sarah Williams',
-      email: 'admin@demo.com',
-      role: 'admin' as const
-    }
-  }
-];
-
-export function LoginPage({ onLogin }: LoginPageProps) {
+export function LoginPage() {
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [showDemo, setShowDemo] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setIsSubmitting(true);
 
-    const credential = DEMO_CREDENTIALS.find(
-      c => c.email === email && c.password === password
-    );
+    try {
+      const response = await api.post('/users/login/', {
+        username: email, // Using email as username per Django default config or custom logic
+        password: password
+      });
 
-    if (credential) {
-      onLogin(credential.user);
-    } else {
-      setError('Invalid email or password');
+      const { access, role, username, id } = response.data;
+      
+      login(access, {
+        id: id,
+        name: username,
+        email: email,
+        role: role
+      });
+
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Invalid email or password');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -161,7 +150,16 @@ export function LoginPage({ onLogin }: LoginPageProps) {
             </button>
           </form>
 
-          <div className="mt-6 text-center">
+          <div className="mt-6 text-center space-y-2">
+            <p className="text-[#64748B] text-sm">
+              Don't have an account?{' '}
+              <Link 
+                to="/register"
+                className="text-[#4F46E5] hover:text-[#4338CA] font-semibold transition-colors"
+              >
+                Create one now
+              </Link>
+            </p>
             <p className="text-[#64748B] text-sm">
               Need help?{' '}
               <a href="#" className="text-[#4F46E5] hover:text-[#4338CA] font-medium transition-colors">

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { 
   MessageCircle, 
   Calendar, 
@@ -12,15 +13,16 @@ import {
   AlertCircle,
   ClipboardCheck,
   Sparkles,
-  Phone
+  Phone,
+  Activity
 } from 'lucide-react';
-import { AIChatSupport } from './AIChatSupport';
 import { BookingSystem } from './BookingSystem';
 import { ResourceHub } from './ResourceHub';
 import { PeerSupport } from './PeerSupport';
 import { ExamToolkit } from './ExamToolkit';
 import { CrisisSafety } from './CrisisSafety';
 import { SelfAssessment } from './SelfAssessment';
+import { AssessmentHistory } from './AssessmentHistory';
 import type { User } from '../App';
 
 interface StudentDashboardProps {
@@ -28,15 +30,15 @@ interface StudentDashboardProps {
   onLogout: () => void;
 }
 
-type Tab = 'chat' | 'booking' | 'resources' | 'peer' | 'exam' | 'crisis' | 'assessment';
+type Tab = 'booking' | 'resources' | 'peer' | 'exam' | 'crisis' | 'assessment' | 'history';
 
 export function StudentDashboard({ user, onLogout }: StudentDashboardProps) {
-  const [activeTab, setActiveTab] = useState<Tab>('chat');
+  const [activeTab, setActiveTab] = useState<Tab>('assessment');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const tabs = [
-    { id: 'chat' as Tab, label: 'AI Support', icon: MessageCircle, badge: 'New' },
-    { id: 'assessment' as Tab, label: 'Self-Assessment', icon: ClipboardCheck },
+    { id: 'assessment' as Tab, label: 'Take Test', icon: ClipboardCheck },
+    { id: 'history' as Tab, label: 'My Progress', icon: Activity },
     { id: 'booking' as Tab, label: 'Book Appointment', icon: Calendar },
     { id: 'resources' as Tab, label: 'Resources', icon: BookOpen },
     { id: 'peer' as Tab, label: 'Peer Support', icon: Users },
@@ -70,6 +72,15 @@ export function StudentDashboard({ user, onLogout }: StudentDashboardProps) {
               >
                 {mobileMenuOpen ? <X className="w-6 h-6 text-[#64748B]" /> : <Menu className="w-6 h-6 text-[#64748B]" />}
               </button>
+              <Link
+                to="/profile"
+                className="hidden lg:flex items-center gap-2 px-4 py-2 border-2 border-[#E2E8F0] hover:border-[#4F46E5] text-[#1E293B] bg-white hover:bg-[#EEF2FF] rounded-xl transition-all font-semibold shadow-sm"
+              >
+                <div className="w-7 h-7 bg-gradient-to-br from-[#4F46E5] to-[#8B5CF6] rounded-full flex items-center justify-center text-xs text-white font-bold">
+                  {user.name.charAt(0).toUpperCase()}
+                </div>
+                My Profile
+              </Link>
               <button
                 onClick={onLogout}
                 className="hidden lg:flex items-center gap-2 px-4 py-2.5 text-[#64748B] hover:text-[#1E293B] hover:bg-[#F1F5F9] rounded-xl transition-all font-medium"
@@ -110,11 +121,6 @@ export function StudentDashboard({ user, onLogout }: StudentDashboardProps) {
                     <Icon className="w-5 h-5" />
                   </div>
                   <span className="text-[15px]">{tab.label}</span>
-                  {tab.badge && !isActive && (
-                    <span className="ml-auto text-xs font-semibold px-2 py-1 bg-gradient-to-r from-[#4F46E5] to-[#8B5CF6] text-white rounded-full">
-                      {tab.badge}
-                    </span>
-                  )}
                 </button>
               );
             })}
@@ -154,13 +160,13 @@ export function StudentDashboard({ user, onLogout }: StudentDashboardProps) {
         {/* Main Content */}
         <main className="flex-1 p-4 lg:p-6 bg-[#F8FAFC]">
           <div className="max-w-5xl mx-auto">
-            {activeTab === 'chat' && <AIChatSupport />}
             {activeTab === 'booking' && <BookingSystem />}
             {activeTab === 'resources' && <ResourceHub />}
             {activeTab === 'peer' && <PeerSupport />}
             {activeTab === 'exam' && <ExamToolkit />}
             {activeTab === 'crisis' && <CrisisSafety />}
             {activeTab === 'assessment' && <SelfAssessment />}
+            {activeTab === 'history' && <AssessmentHistory />}
           </div>
         </main>
       </div>
