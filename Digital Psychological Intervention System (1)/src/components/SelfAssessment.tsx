@@ -11,7 +11,11 @@ interface Question {
   options: { value: number; label: string }[];
 }
 
-export function SelfAssessment() {
+interface SelfAssessmentProps {
+  onNavigate?: (tab: string) => void;
+}
+
+export function SelfAssessment({ onNavigate }: SelfAssessmentProps = {}) {
   const [screen, setScreen] = useState<Screen>('select');
   const [selectedAssessment, setSelectedAssessment] = useState<AssessmentType>(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -19,7 +23,7 @@ export function SelfAssessment() {
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [showPauseModal, setShowPauseModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [severityResult, setSeverityResult] = useState<{level: string, score: number, color: string, bgColor: string} | null>(null);
+  const [severityResult, setSeverityResult] = useState<{ level: string, score: number, color: string, bgColor: string } | null>(null);
 
   const totalQuestions = questions.length;
   const progress = totalQuestions > 0 ? ((currentQuestion + 1) / totalQuestions) * 100 : 0;
@@ -95,11 +99,11 @@ export function SelfAssessment() {
           questionnaire_id: qId,
           answers: newAnswers
         });
-        
+
         const label = res.data.severity_label;
         let color = 'text-blue-700';
         let bgColor = 'bg-blue-50';
-        
+
         if (label === 'Minimal') { color = 'text-green-700'; bgColor = 'bg-green-50'; }
         else if (label === 'Mild') { color = 'text-blue-700'; bgColor = 'bg-blue-50'; }
         else if (label === 'Moderate') { color = 'text-amber-700'; bgColor = 'bg-amber-50'; }
@@ -111,8 +115,8 @@ export function SelfAssessment() {
         console.error("Failed to submit assessment", err);
         setSeverityResult({ level: "Submission Error", score: 0, color: 'text-red-700', bgColor: 'bg-red-50' });
       } finally {
-         setIsLoading(false);
-         setScreen('results');
+        setIsLoading(false);
+        setScreen('results');
       }
     }
   };
@@ -156,7 +160,7 @@ export function SelfAssessment() {
             <div>
               <h3 className="text-gray-900 mb-2">A Safe Space for Self-Reflection</h3>
               <p className="text-gray-700 text-sm">
-                These assessments are confidential, completely optional, and designed to help you better understand your mental wellbeing. 
+                These assessments are confidential, completely optional, and designed to help you better understand your mental wellbeing.
                 There are no right or wrong answers—just honest reflections.
               </p>
             </div>
@@ -207,7 +211,7 @@ export function SelfAssessment() {
             <div className="text-sm text-blue-900">
               <p className="mb-1"><strong>Privacy First:</strong></p>
               <p className="text-blue-800">
-                Your responses are confidential and stored anonymously. You can pause or exit at any time. 
+                Your responses are confidential and stored anonymously. You can pause or exit at any time.
                 This is a screening tool, not a medical diagnosis.
               </p>
             </div>
@@ -232,7 +236,7 @@ export function SelfAssessment() {
             <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
               <p className="text-purple-900 mb-2">📋 This is a screening tool, not a diagnosis</p>
               <p className="text-purple-800 text-sm">
-                This assessment helps identify symptoms but cannot replace a professional evaluation. 
+                This assessment helps identify symptoms but cannot replace a professional evaluation.
                 Only a qualified healthcare provider can make a diagnosis.
               </p>
             </div>
@@ -425,7 +429,7 @@ export function SelfAssessment() {
           {/* Next Steps */}
           <div>
             <h3 className="text-gray-900 mb-4">Recommended Next Steps</h3>
-            
+
             {(severity.level === 'Minimal' || severity.level === 'Low Distress') && (
               <div className="space-y-3">
                 <div className="border border-gray-200 rounded-lg p-4">
@@ -436,7 +440,7 @@ export function SelfAssessment() {
                   <p className="text-gray-600 text-sm mb-3">
                     Continue building healthy habits with our wellness resources and relaxation exercises.
                   </p>
-                  <button className="w-full px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors">
+                  <button onClick={() => onNavigate?.('resources')} className="w-full px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors">
                     Browse Resources
                   </button>
                 </div>
@@ -449,7 +453,7 @@ export function SelfAssessment() {
                   <p className="text-gray-600 text-sm mb-3">
                     Connect with fellow students for mutual support and community.
                   </p>
-                  <button className="w-full px-4 py-2 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors">
+                  <button onClick={() => onNavigate?.('peer')} className="w-full px-4 py-2 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors">
                     Join Community
                   </button>
                 </div>
@@ -466,7 +470,7 @@ export function SelfAssessment() {
                   <p className="text-gray-600 text-sm mb-3">
                     Speaking with a professional counsellor can provide personalized support and coping strategies.
                   </p>
-                  <button className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                  <button onClick={() => onNavigate?.('booking')} className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
                     Book Appointment
                   </button>
                 </div>
@@ -479,7 +483,7 @@ export function SelfAssessment() {
                   <p className="text-gray-600 text-sm mb-3">
                     Explore guided exercises, coping tools, and wellness content.
                   </p>
-                  <button className="w-full px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors">
+                  <button onClick={() => onNavigate?.('resources')} className="w-full px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors">
                     View Resources
                   </button>
                 </div>
@@ -503,7 +507,7 @@ export function SelfAssessment() {
                     >
                       Call Crisis Hotline Now
                     </a>
-                    <button className="w-full px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors">
+                    <button onClick={() => onNavigate?.('crisis')} className="w-full px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors">
                       View All Emergency Resources
                     </button>
                   </div>
@@ -517,7 +521,7 @@ export function SelfAssessment() {
                   <p className="text-gray-600 text-sm mb-3">
                     Schedule an appointment with a professional counsellor as soon as possible.
                   </p>
-                  <button className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                  <button onClick={() => onNavigate?.('booking')} className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
                     Book Urgent Appointment
                   </button>
                 </div>

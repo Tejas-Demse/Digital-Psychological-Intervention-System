@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  MessageCircle, 
-  Calendar, 
-  BookOpen, 
-  Users, 
+import {
+  MessageCircle,
+  Calendar,
+  BookOpen,
+  Users,
   LogOut,
   Heart,
   Menu,
@@ -64,7 +64,7 @@ export function StudentDashboard({ user, onLogout }: StudentDashboardProps) {
                 </p>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -107,17 +107,15 @@ export function StudentDashboard({ user, onLogout }: StudentDashboardProps) {
                     setActiveTab(tab.id);
                     setMobileMenuOpen(false);
                   }}
-                  className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all font-medium relative group ${
-                    isActive
-                      ? 'bg-gradient-to-r from-[#4F46E5] to-[#8B5CF6] text-white shadow-lg shadow-[#4F46E5]/25'
-                      : 'text-[#64748B] hover:text-[#1E293B] hover:bg-[#F1F5F9]'
-                  }`}
+                  className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all font-medium relative group ${isActive
+                    ? 'bg-gradient-to-r from-[#4F46E5] to-[#8B5CF6] text-white shadow-lg shadow-[#4F46E5]/25'
+                    : 'text-[#64748B] hover:text-[#1E293B] hover:bg-[#F1F5F9]'
+                    }`}
                 >
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                    isActive 
-                      ? 'bg-white/20' 
-                      : 'bg-[#F1F5F9] group-hover:bg-[#E2E8F0]'
-                  } transition-colors`}>
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${isActive
+                    ? 'bg-white/20'
+                    : 'bg-[#F1F5F9] group-hover:bg-[#E2E8F0]'
+                    } transition-colors`}>
                     <Icon className="w-5 h-5" />
                   </div>
                   <span className="text-[15px]">{tab.label}</span>
@@ -165,7 +163,7 @@ export function StudentDashboard({ user, onLogout }: StudentDashboardProps) {
             {activeTab === 'peer' && <PeerSupport />}
             {activeTab === 'exam' && <ExamToolkit />}
             {activeTab === 'crisis' && <CrisisSafety />}
-            {activeTab === 'assessment' && <SelfAssessment />}
+            {activeTab === 'assessment' && <SelfAssessment onNavigate={(tab) => setActiveTab(tab as Tab)} />}
             {activeTab === 'history' && <AssessmentHistory />}
           </div>
         </main>
