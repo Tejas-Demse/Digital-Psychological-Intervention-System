@@ -6,3 +6,10 @@ class IsAdmin(permissions.BasePermission):
     """
     def has_permission(self, request, view):
         return bool(request.user and request.user.is_authenticated and request.user.role == 'admin')
+
+class IsCounselor(permissions.BasePermission):
+    """
+    Custom permission to only allow counselors to access the view.
+    """
+    def has_permission(self, request, view):
+        return bool(request.user and request.user.is_authenticated and request.user.role == 'counselor')

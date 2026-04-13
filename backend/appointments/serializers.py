@@ -38,3 +38,8 @@ class AppointmentSerializer(serializers.ModelSerializer):
         model = Appointment
         fields = ['id', 'student', 'time_slot', 'time_slot_id', 'status', 'meeting_link', 'notes', 'created_at']
         read_only_fields = ['student', 'status', 'meeting_link', 'created_at']
+
+class TimeSlotCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TimeSlot
+        fields = ['id', 'start_time', 'end_time', 'is_booked']

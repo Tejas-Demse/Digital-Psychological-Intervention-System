@@ -43,4 +43,12 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         data['role'] = self.user.role
         data['username'] = self.user.username
         data['id'] = self.user.id
+        
+        # Add comprehensive user payload for frontend
+        data['user'] = {
+            'id': self.user.id,
+            'email': self.user.email,
+            'role': self.user.role
+        }
+        
         return data

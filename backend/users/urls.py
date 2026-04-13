@@ -5,7 +5,8 @@ from .views import (
     CustomTokenObtainPairView,
     UserProfileView,
     AdminDashboardView,
-    SOSAlertView
+    SOSAlertView,
+    AtRiskStudentsView
 )
 
 urlpatterns = [
@@ -15,4 +16,5 @@ urlpatterns = [
     path('profile/', UserProfileView.as_view(), name='profile'),
     path('dashboard/admin/', AdminDashboardView.as_view(), name='admin_dashboard'),
     path('sos/', SOSAlertView.as_view(), name='sos_alert'),
+    path('at-risk/', AtRiskStudentsView.as_view(), name='at_risk_students'),
 ]

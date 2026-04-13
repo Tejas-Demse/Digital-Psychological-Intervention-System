@@ -3,8 +3,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from users.permissions import IsCounselor
 from .models import TimeSlot, Appointment
-from .serializers import TimeSlotSerializer, AppointmentSerializer
+from .serializers import TimeSlotSerializer, AppointmentSerializer, TimeSlotCreateSerializer
 import uuid
 
 class AvailableTimeSlotsView(generics.ListAPIView):
@@ -54,3 +55,31 @@ class BookAppointmentView(APIView):
 
         serializer = AppointmentSerializer(appointment)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+class TimeSlotListCreateView(generics.ListCreateAPIView):
+    permission_classes = [permissions.IsAuthenticated, IsCounselor]
+
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return TimeSlotCreateSerializer
+        return TimeSlotSerializer
+
+    def get_queryset(self):
+        return TimeSlot.objects.filter(counselor=self.request.user).order_by('start_time')
+
+    def perform_create(self, serializer):
+        serializer.save(counselor=self.request.user)
+
+class TimeSlotDetailView(generics.RetrieveDestroyAPIView):
+    serializer_class = TimeSlotSerializer
+    permission_classes = [permissions.IsAuthenticated, IsCounselor]
+
+    def get_queryset(self):
+        return TimeSlot.objects.filter(counselor=self.request.user)
+
+class CounselorAppointmentsView(generics.ListAPIView):
+    serializer_class = AppointmentSerializer
+    permission_classes = [permissions.IsAuthenticated, IsCounselor]
+
+    def get_queryset(self):
+        return Appointment.objects.filter(time_slot__counselor=self.request.user).order_by('time_slot__start_time')

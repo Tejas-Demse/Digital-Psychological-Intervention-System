@@ -11,7 +11,11 @@ interface Question {
   options: { value: number; label: string }[];
 }
 
-export function SelfAssessment() {
+interface SelfAssessmentProps {
+  onBookAppointment?: () => void;
+}
+
+export function SelfAssessment({ onBookAppointment }: SelfAssessmentProps = {}) {
   const [screen, setScreen] = useState<Screen>('select');
   const [selectedAssessment, setSelectedAssessment] = useState<AssessmentType>(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -466,7 +470,10 @@ export function SelfAssessment() {
                   <p className="text-gray-600 text-sm mb-3">
                     Speaking with a professional counsellor can provide personalized support and coping strategies.
                   </p>
-                  <button className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                  <button 
+                    onClick={onBookAppointment}
+                    className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                  >
                     Book Appointment
                   </button>
                 </div>
@@ -517,7 +524,10 @@ export function SelfAssessment() {
                   <p className="text-gray-600 text-sm mb-3">
                     Schedule an appointment with a professional counsellor as soon as possible.
                   </p>
-                  <button className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                  <button 
+                    onClick={onBookAppointment}
+                    className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                  >
                     Book Urgent Appointment
                   </button>
                 </div>

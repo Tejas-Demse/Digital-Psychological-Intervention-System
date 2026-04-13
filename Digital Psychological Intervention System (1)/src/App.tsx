@@ -3,7 +3,9 @@ import { LoginPage } from './components/LoginPage';
 import { RegisterPage } from './components/RegisterPage';
 import { StudentDashboard } from './components/StudentDashboard';
 import { AdminDashboard } from './components/AdminDashboard';
+import { CounselorDashboard } from './components/CounselorDashboard';
 import { ProfileSettings } from './components/ProfileSettings';
+import { ProtectedRoute } from './components/ProtectedRoute';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 export type UserRole = 'student' | 'admin' | 'counselor' | null;
@@ -26,19 +28,40 @@ function AppRoutes() {
     <Routes>
       <Route 
         path="/" 
-        element={user ? <Navigate to="/dashboard" /> : <LoginPage />} 
+        element={
+          user 
+            ? user.role === 'counselor' 
+              ? <Navigate to="/counselor-dashboard" /> 
+              : <Navigate to="/dashboard" />
+            : <LoginPage />
+        } 
       />
       <Route 
         path="/register" 
-        element={user ? <Navigate to="/dashboard" /> : <RegisterPage />} 
+        element={
+          user 
+            ? user.role === 'counselor' 
+              ? <Navigate to="/counselor-dashboard" /> 
+              : <Navigate to="/dashboard" />
+            : <RegisterPage />
+        } 
       />
       <Route 
         path="/dashboard" 
         element={
           !user ? <Navigate to="/" /> : 
+          user.role === 'counselor' ? <Navigate to="/counselor-dashboard" /> :
           user.role === 'admin' ? <AdminDashboard user={user} onLogout={logout} /> : 
           <StudentDashboard user={user} onLogout={logout} />
         } 
+      />
+      <Route
+        path="/counselor-dashboard"
+        element={
+          <ProtectedRoute allowedRole="counselor">
+            <CounselorDashboard user={user!} onLogout={logout} />
+          </ProtectedRoute>
+        }
       />
       <Route 
         path="/profile" 

@@ -8,7 +8,7 @@ from .serializers import (
     UserProfileSerializer, 
     CustomTokenObtainPairSerializer
 )
-from .permissions import IsAdmin
+from .permissions import IsAdmin, IsCounselor
 from appointments.models import Appointment
 
 User = get_user_model()
@@ -55,3 +55,10 @@ class SOSAlertView(APIView):
         user.is_at_risk = True
         user.save()
         return Response({"message": "SOS Alert triggered successfully. Our team has been notified."}, status=status.HTTP_200_OK)
+
+class AtRiskStudentsView(generics.ListAPIView):
+    serializer_class = UserProfileSerializer
+    permission_classes = [permissions.IsAuthenticated, IsCounselor]
+
+    def get_queryset(self):
+        return User.objects.filter(is_at_risk=True)

@@ -165,7 +165,7 @@ export function StudentDashboard({ user, onLogout }: StudentDashboardProps) {
             {activeTab === 'peer' && <PeerSupport />}
             {activeTab === 'exam' && <ExamToolkit />}
             {activeTab === 'crisis' && <CrisisSafety />}
-            {activeTab === 'assessment' && <SelfAssessment />}
+            {activeTab === 'assessment' && <SelfAssessment onBookAppointment={() => setActiveTab('booking')} />}
             {activeTab === 'history' && <AssessmentHistory />}
           </div>
         </main>
